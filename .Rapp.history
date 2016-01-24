@@ -1,0 +1,83 @@
+avilable.packages()
+a<-avilable.packages()
+a <- avilable.packages()
+a <- available.packages()
+1
+1#
+2
+1#
+2#
+3
+1#
+2#
+3#
+4
+1#
+2#
+3#
+4#
+exit
+1#
+2#
+3#
+4#
+exit#
+clc
+a <- available.packages()
+head(rownames(a),3)
+install.packages("slidify")
+install.packages('devtools')
+install.packages("slidify")
+library(devtools)
+install_github('slidify', 'ramnathv')
+install_github('slidifyLibraries', 'ramnathv')
+install_github('ramnathv/slidifyLibraries', 'ramnathv')
+install.packages("ggplot")
+install.packages("ggplot2")
+library(ggplot2)
+search
+search()
+install.packages("KernSmooth")
+library(KernSmooth)
+swirl()
+install.packages
+install.packages("swirl")
+library("swirl")
+swirl()
+cont()
+getwd()
+ls()
+x<-9
+ls()
+list.files
+list.files()
+?list.files()
+?list.files
+args(list.files)
+old.dir <- getwd()
+dir.create("testdir")
+setwd()
+setwd("testdir")
+file.create("mytest.R")
+dir()
+file.exists("mytest.R")
+file.info("mytest.R")
+fike.rename("mytest.R","mytest2.R")
+file.rename("mytest.R","mytest2.R")
+file.copy("mytest2.R","mytest3.R")
+play()
+nxt()
+file.path("mytest3.R")
+file.path("folder1","folder2")
+?dir.create
+dir.create(filepath("testdir2","testdir3"),  recursive = TRUE)
+dir.create(file.path("testdir2","testdir3"),  recursive = TRUE)
+play()
+getwd()
+nxt()
+?unlink
+unlink("testdir2", recursive = T)
+unlink("testdir2", recursive = TRUE)
+setwd()
+setwd(old.dir)
+unlink("testdir", recursive = TRUE)
