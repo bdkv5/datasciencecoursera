@@ -1,0 +1,107 @@
+C51 COMPILER V6.02  LCD_ROUTINES                                                           12/14/2015 14:50:22 PAGE 1   
+
+
+C51 COMPILER V6.02, COMPILATION OF MODULE LCD_ROUTINES
+OBJECT MODULE PLACED IN .\LCD_routines.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE .\LCD_routines.c DEBUG OBJECTEXTEND
+
+stmt level    source
+
+   1          #include "main.h"
+   2          #include "LCD_Routines.h"
+   3          #include "PORT.H"
+   4          #include "hardware_delay.h"
+   5          
+   6          
+   7          /***********************************************************************
+   8          DESC:    Writes data to the LCD with proper order for RS and E
+   9          INPUT: Uint8 for RS and Data to be written
+  10                 RS=0 instruction, RS=1 data
+  11          RETURNS: Nothing
+  12          CAUTION: None
+  13          ************************************************************************/
+  14          void LCD_Write(bit RegSelect, uint8_t LCD_Data)
+  15          {
+  16   1        RS=RegSelect;  // Set or Clear RS before E is Set
+  17   1        E=1;           // Set Enable before data written
+  18   1        LCD_Data_Port=LCD_Data;   
+  19   1        E=0;
+  20   1        LCD_Data_Port=0xFF;
+  21   1        RS=1;
+  22   1      }
+  23          
+  24          
+  25          
+  26          
+  27          
+  28          /***********************************************************************
+  29          DESC:    Initializes LCD
+  30          INPUT: Nothing
+  31          RETURNS: Nothing
+  32          CAUTION: Uses timer 1 in delay functions
+  33          ************************************************************************/
+  34          void LCD_Init(void)
+  35          {
+  36   1        
+  37   1        LCD_Write(COMMAND,function_set_8bit);   // 8-bit interface, 2 lines, 5x8 font
+  38   1        DELAY_1ms_T1(10);
+  39   1        LCD_Write(COMMAND,function_set_8bit);
+  40   1        DELAY_1ms_T1(5);
+  41   1        LCD_Write(COMMAND,function_set_8bit);
+  42   1        DELAY_1ms_T1(1);
+  43   1        LCD_Write(COMMAND,function_set_8bit|two_line|set_5x8);
+  44   1        DELAY_1ms_T1(1);
+  45   1        LCD_Write(COMMAND,display_control|display_on|cursor_off|blink_off);   // Display on, Cursor On and Not b
+             -linking
+  46   1        DELAY_1ms_T1(1);
+  47   1        LCD_Write(COMMAND,clear_display);   // Clear Display
+  48   1        DELAY_1ms_T1(5);         // Must wait until this is complete
+  49   1        LCD_Write(COMMAND,entry_mode|shift_right|cursor);   // DDRAM address increments with no scrolling
+  50   1        DELAY_1ms_T1(1);
+  51   1      
+  52   1      }
+  53          
+  54          
+C51 COMPILER V6.02  LCD_ROUTINES                                                           12/14/2015 14:50:22 PAGE 2   
+
+  55          
+  56          void LCD_print(uint8_t num_bytes, uint8_t *array_name)
+  57          {
+  58   1         uint8_t index,character;
+  59   1         if(num_bytes==0)
+  60   1         {
+  61   2            index=0;
+  62   2            character=*(array_name+index);
+  63   2            while(character!=0)
+  64   2            {
+  65   3               LCD_Write(DDRAM,character);
+  66   3               DELAY_100us_T1(1);
+  67   3               index++;
+  68   3               character=*(array_name+index);
+  69   3            }
+  70   2          }
+  71   1          else
+  72   1          {
+  73   2             for(index=0;index<num_bytes;index++)
+  74   2             {
+  75   3                character=*(array_name+index);
+  76   3                LCD_Write(DDRAM,character);
+  77   3                DELAY_100us_T1(1);
+  78   3             }
+  79   2          }     
+  80   1      }
+  81          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    221    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       7
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

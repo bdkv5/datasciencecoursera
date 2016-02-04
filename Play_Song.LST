@@ -1,0 +1,754 @@
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 1   
+
+
+C51 COMPILER V6.02, COMPILATION OF MODULE PLAY_SONG
+OBJECT MODULE PLACED IN .\Play_Song.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE .\Play_Song.c DEBUG OBJECTEXTEND
+
+stmt level    source
+
+   1          #include "stdio.h"
+   2          #include "main.h"
+   3          #include "PORT.H"
+   4          #include "SPI.h"
+   5          #include "File_System.h"
+   6          #include "Read_Sector.h"
+   7          #include "Play_Song.h"
+   8          #include "print_bytes.h"
+   9          extern uint8_t xdata buf1[512];
+  10          extern uint8_t xdata buf2[512]; 
+  11          
+  12          
+  13          state state_g;
+  14          void Play_Song(uint32_t Start_Cluster)
+  15          {
+  16   1      	
+  17   1         uint16_t index1, index2;
+  18   1         //uint8_t buffer1, buffer2;
+  19   1         uint8_t temp8,play_status=0;
+  20   1         uint32_t sector ;
+  21   1         uint32_t sector_base,sector_offset;
+  22   1         printf("Starting Cluster = %lu\n\r",Start_Cluster);
+  23   1      
+  24   1         sector=First_Sector(Start_Cluster);
+  25   1         printf("Starting Sector = %lu\n\r",sector);
+  26   1         sector_base=sector;
+  27   1         sector_offset=0;
+  28   1        // buffer1=1;
+  29   1      //   buffer2=0;
+  30   1         //P3_2=ON;
+  31   1         YELLOWLED=ON;
+  32   1         index1=0;
+  33   1         
+  34   1         Read_Sector(sector_base+sector_offset, 512, buf1);
+  35   1      //print_memory(512,buf1);
+  36   1         sector_offset++;
+  37   1         YELLOWLED=OFF;
+  38   1         AMBERLED=ON;
+  39   1         index2=0;
+  40   1         state_g=data_idle_1;
+  41   1         
+  42   1         Read_Sector(sector_base+sector_offset, 512, buf2);
+  43   1        // print_memory(512,buf2);
+  44   1         sector_offset++;
+  45   1         AMBERLED=OFF;
+  46   1         while((Start_Cluster != 0x0FFFFFFF) &&(SW1==1))
+  47   1          {
+  48   2      
+  49   2      	if ( SW2 == 0)
+  50   2      	 {
+  51   3            while(SW3 == 1)
+  52   3      	  {
+  53   4      	  }
+  54   3      	 }
+  55   2         	
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 2   
+
+  56   2      	//printf("%ld",Start_Cluster);
+  57   2      	//	printf("\n");
+  58   2      	   //printf("\n check song");
+  59   2             if ( state_g == load_buf_1)
+  60   2      	   {
+  61   3      	      if (sector_offset > 64)
+  62   3      	      {
+  63   4      		  
+  64   4      		  state_g = find_cluster_1;
+  65   4      		  }
+  66   3      
+  67   3      	   }
+  68   2             if ( state_g == load_buf_2)
+  69   2      	   {
+  70   3      	      if (sector_offset > 64)
+  71   3      	      {
+  72   4      		  
+  73   4      		  state_g = find_cluster_2;
+  74   4      		  }
+  75   3      
+  76   3      	   }
+  77   2      
+  78   2          switch(state_g)
+  79   2          {
+  80   3       	  case data_idle_1:
+  81   3      	  {
+  82   4      	/*	YELLOWLED=OFF;
+  83   4         		AMBERLED=OFF;
+  84   4      		GREENLED=ON;
+  85   4      		REDLED=OFF;*/
+  86   4      		//	printf("\na");
+  87   4      		     if(DATA_REQ==0)
+  88   4      			{
+  89   5      				state_g=data_send_1;
+  90   5      			}
+  91   4      		break;
+  92   4      	  }
+  93   3        
+  94   3           	case data_send_1:
+  95   3      		{
+  96   4      		
+  97   4      		if( DATA_REQ == 0)
+  98   4              {
+  99   5      		BIT_EN = 1;
+ 100   5      
+ 101   5      		 SPI_Transfer(buf1[index1], &temp8); 
+ 102   5      		 BIT_EN = 0;
+ 103   5        	     index1 = index1 + 1;
+ 104   5                  if(index1 > 511)
+ 105   5      			    {
+ 106   6      				   if(index2 > 511)
+ 107   6      				      {
+ 108   7      						 
+ 109   7      					    if( play_status == 3)
+ 110   7      						   {
+ 111   8      						      play_status = 0 ;
+ 112   8                                 }
+ 113   7      						else
+ 114   7      						   {
+ 115   8      						     state_g = load_buf_2;
+ 116   8      							 index2=0;
+ 117   8                                 }
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 3   
+
+ 118   7      					  }
+ 119   6      			    
+ 120   6      
+ 121   6             			   else
+ 122   6      	     		    {
+ 123   7      	      	    
+ 124   7      		     		 state_g = data_send_2;
+ 125   7      					}
+ 126   6                     }
+ 127   5      		 }
+ 128   4       	    if( DATA_REQ == 1)
+ 129   4      		 {
+ 130   5      		    if(index2 > 511)
+ 131   5      		     {
+ 132   6      		      state_g = load_buf_2 ;
+ 133   6      			  index2=0;
+ 134   6      			 }
+ 135   5      	     }
+ 136   4      		
+ 137   4      	   break ;
+ 138   4            } 
+ 139   3              
+ 140   3      
+ 141   3      		
+ 142   3      		case load_buf_2:
+ 143   3      	    {
+ 144   4      		  /*YELLOWLED=ON;
+ 145   4         		  AMBERLED=OFF;
+ 146   4      		  GREENLED=OFF;
+ 147   4      		  REDLED=OFF;*/
+ 148   4      		  Read_Sector(sector+sector_offset,512,buf2);
+ 149   4      		//  print_memory(512,buf2);
+ 150   4      		  sector_offset = sector_offset + 1 ;
+ 151   4      		  state_g=data_idle_1;
+ 152   4                break;
+ 153   4           	}
+ 154   3      
+ 155   3            	case find_cluster_2:
+ 156   3      	    {
+ 157   4      	/*	YELLOWLED=OFF;
+ 158   4         		AMBERLED=OFF;
+ 159   4      		GREENLED=OFF;
+ 160   4      		REDLED=ON;*/
+ 161   4      		Start_Cluster=Find_Next_Clus(Start_Cluster,buf2);
+ 162   4      		printf("Cluster = %lu\n\r",Start_Cluster);
+ 163   4      		//index2=0;  
+ 164   4      		if(Start_Cluster==0x0FFFFFFF)
+ 165   4      	     	{
+ 166   5      			play_status=3;
+ 167   5      			state_g=data_idle_1;
+ 168   5      	      	}
+ 169   4      	     	else
+ 170   4      		    {
+ 171   5      	      	sector=First_Sector(Start_Cluster);
+ 172   5      			sector_offset=0;
+ 173   5      			state_g=data_idle_1;
+ 174   5      			}
+ 175   4      		break;
+ 176   4        	   }
+ 177   3      
+ 178   3      //===============New==============Entries=========================================================//
+ 179   3      case data_idle_2:
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 4   
+
+ 180   3      	  {
+ 181   4      	/*	YELLOWLED=OFF;
+ 182   4         		AMBERLED=OFF;
+ 183   4      		GREENLED=ON;
+ 184   4      		REDLED=OFF;*/
+ 185   4      		//	printf("\na");
+ 186   4      		     if(DATA_REQ==0)
+ 187   4      			{
+ 188   5      				state_g=data_send_2;
+ 189   5      			}
+ 190   4      		break;
+ 191   4      	  }
+ 192   3        
+ 193   3           	case data_send_2:
+ 194   3      		{
+ 195   4      		
+ 196   4      		if( DATA_REQ == 0)
+ 197   4              {
+ 198   5      		BIT_EN = 1;
+ 199   5      		 SPI_Transfer(buf2[index2], &temp8); 
+ 200   5      		 BIT_EN = 0;
+ 201   5        	     index2 = index2 + 1;
+ 202   5                  if(index2 > 511)
+ 203   5      			    {
+ 204   6      				   if(index1 > 511)
+ 205   6      				      {
+ 206   7      					    if( play_status == 3)
+ 207   7      						   {
+ 208   8      						      play_status = 0 ;
+ 209   8                                 }
+ 210   7      						else
+ 211   7      						   {
+ 212   8      						     state_g = load_buf_1;
+ 213   8      							 index1=0;
+ 214   8                                 }
+ 215   7      					  }
+ 216   6      			    
+ 217   6      
+ 218   6             			   else
+ 219   6      	     		    {
+ 220   7      	      	    
+ 221   7      		     		 state_g = data_send_1;
+ 222   7      					}
+ 223   6                     }
+ 224   5      		 }
+ 225   4       	   if( DATA_REQ == 1)
+ 226   4      		 {
+ 227   5      		    if(index1 > 511)
+ 228   5      		     {
+ 229   6      		      state_g = load_buf_1 ;
+ 230   6      			  index1=0;
+ 231   6      			 }
+ 232   5      	     }
+ 233   4      	   break ;
+ 234   4      	   
+ 235   4            } 
+ 236   3              
+ 237   3      
+ 238   3      		
+ 239   3      		case load_buf_1:
+ 240   3      	    {
+ 241   4      		 /* YELLOWLED=ON;
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 5   
+
+ 242   4         		  AMBERLED=OFF;
+ 243   4      		  GREENLED=OFF;
+ 244   4      		  REDLED=OFF;*/
+ 245   4      		  Read_Sector(sector+sector_offset,512,buf1);
+ 246   4         		//	print_memory(512,buf1);
+ 247   4      		  sector_offset = sector_offset + 1 ;
+ 248   4      		  state_g=data_idle_2;
+ 249   4                break;
+ 250   4           	}
+ 251   3      
+ 252   3            	case find_cluster_1:
+ 253   3      	    {
+ 254   4      	/*	YELLOWLED=OFF;
+ 255   4         		AMBERLED=OFF;
+ 256   4      		GREENLED=OFF;
+ 257   4      		REDLED=ON;*/
+ 258   4      		Start_Cluster=Find_Next_Clus(Start_Cluster,buf1);
+ 259   4      		printf("Cluster = %lu\n\r",Start_Cluster);
+ 260   4      		  if(Start_Cluster==0x0FFFFFFF)
+ 261   4      	     	{
+ 262   5      			play_status=3;
+ 263   5      			state_g=data_idle_2;
+ 264   5      	      	}
+ 265   4      	     	else
+ 266   4      		    {
+ 267   5      	      	sector=First_Sector(Start_Cluster);
+ 268   5      			sector_offset=0;
+ 269   5      			state_g=data_idle_2;
+ 270   5      			}
+ 271   4      		break;
+ 272   4        	   }
+ 273   3          }
+ 274   2      
+ 275   2      
+ 276   2      
+ 277   2          }
+ 278   1        }
+ 279            
+ 280          	  /*	
+ 281          	while((Start_Cluster != 0x0FFFFFFF) && (SW1==1))
+ 282          	{
+ 283          		if(state_g == load_buf_1)
+ 284          		{
+ 285          			if(sector_offset>=64)
+ 286          			{
+ 287          				state_g=find_cluster_1;
+ 288          			}
+ 289          		}
+ 290          		if(state_g == load_buf_2)
+ 291          		{
+ 292          			if(sector_offset>=64)
+ 293          			{
+ 294          				state_g=find_cluster_2;
+ 295          			}
+ 296          		}
+ 297          	}
+ 298          
+ 299          	switch(state_g)
+ 300          	{
+ 301          		case data_send_1:
+ 302          		{
+ 303          		YELLOWLED=OFF;
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 6   
+
+ 304             		AMBERLED=ON;
+ 305          		GREENLED=OFF;
+ 306          		REDLED=OFF;
+ 307             		do 
+ 308          		{
+ 309          		    if(DATA_REQ == 0)
+ 310          			{
+ 311          			BIT_EN=1;
+ 312          			SPI_Transfer(buf1[index1], &temp8);
+ 313          			BIT_EN=0;
+ 314          			index1++;
+ 315          				if(index1>511)
+ 316          				{
+ 317          					if(index2>511)
+ 318          					{
+ 319          						if(play_status==3)
+ 320          						{
+ 321          						play_status=0;
+ 322          						}
+ 323          						else
+ 324          						{
+ 325          						state_g=load_buf_2;
+ 326          						}
+ 327          					}
+ 328          					else
+ 329          					{
+ 330          					state_g=data_send_2;
+ 331          					}
+ 332          				}
+ 333          				if((DATA_REQ==0)&&(state_g==data_send_1))
+ 334          				{
+ 335          					if(index2>511)
+ 336          					{
+ 337          					state_g=load_buf_1;
+ 338          					}
+ 339          					else
+ 340          					{
+ 341          					state_g=data_idle_1;
+ 342          					}
+ 343          				}
+ 344          			}
+ 345          		  }while(index1<512);
+ 346          		break;
+ 347          		}
+ 348          	case load_buf_2:
+ 349          	{
+ 350          		YELLOWLED=ON;
+ 351             		AMBERLED=OFF;
+ 352          		GREENLED=OFF;
+ 353          		REDLED=OFF;
+ 354          		Read_Sector(sector+sector_offset,512,buf2);
+ 355          		sector_offset++;
+ 356          		state_g=data_idle_1;
+ 357          	break;
+ 358          	}
+ 359          	case data_idle_1:
+ 360          	{
+ 361          				YELLOWLED=OFF;
+ 362             		AMBERLED=OFF;
+ 363          		GREENLED=ON;
+ 364          		REDLED=OFF;
+ 365          			if(DATA_REQ==0)
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 7   
+
+ 366          			{
+ 367          				state_g=data_send_1;
+ 368          			}
+ 369          		break;
+ 370          	}
+ 371          	case find_cluster_2:
+ 372          	{
+ 373          										YELLOWLED=OFF;
+ 374             		AMBERLED=OFF;
+ 375          		GREENLED=OFF;
+ 376          		REDLED=ON;
+ 377          		Start_Cluster=Find_Next_Clus(Start_Cluster,buf2);
+ 378          		if(Start_Cluster==0xFFFFFFFF)
+ 379          		{
+ 380          			play_status=3;
+ 381          			state_g=data_idle_1;
+ 382          		}
+ 383          		else
+ 384          		{
+ 385          		sector=First_Sector(Start_Cluster);
+ 386          		sector_offset=0;
+ 387          		state_g=data_idle_1;
+ 388          		}
+ 389          		break;
+ 390          	}
+ 391          	case data_send_2:
+ 392          		{
+ 393          		YELLOWLED=OFF;
+ 394             		AMBERLED=ON;
+ 395          		GREENLED=OFF;
+ 396          		REDLED=OFF;
+ 397          		if((DATA_REQ==0))
+ 398          		{
+ 399          		BIT_EN=1;
+ 400          		SPI_Transfer(buf2[index2], &temp8);
+ 401          		BIT_EN=0;
+ 402          		index2++;
+ 403          			if(index2>511)
+ 404          			{
+ 405          				if(index1>511)
+ 406          				{
+ 407          					if(play_status==3)
+ 408          					{
+ 409          					play_status=0;
+ 410          					}
+ 411          					else
+ 412          					{
+ 413          					state_g=load_buf_1;
+ 414          					}
+ 415          				}
+ 416          				else
+ 417          				{
+ 418          				state_g=data_send_1;
+ 419          				}
+ 420          			}
+ 421          			if((DATA_REQ==0)&&(state_g==data_send_2))
+ 422          			{
+ 423          				if(index1>511)
+ 424          				{
+ 425          				state_g=load_buf_1;
+ 426          				}
+ 427          				else
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 8   
+
+ 428          				{
+ 429          				state_g=data_idle_2;
+ 430          				}
+ 431          			}
+ 432          		}
+ 433          		break;
+ 434          		}
+ 435          	case load_buf_1:
+ 436          	{
+ 437          				YELLOWLED=ON;
+ 438             		AMBERLED=OFF;
+ 439          		GREENLED=OFF;
+ 440          		REDLED=OFF;
+ 441          		Read_Sector(sector+sector_offset,512,buf2);
+ 442          		sector_offset++;
+ 443          		state_g=data_idle_2;
+ 444          	break;
+ 445          	}
+ 446          	case data_idle_2:
+ 447          	{
+ 448          						YELLOWLED=OFF;
+ 449             		AMBERLED=OFF;
+ 450          		GREENLED=ON;
+ 451          		REDLED=OFF;
+ 452          		if(DATA_REQ==0)
+ 453          		{
+ 454          			state_g=data_send_2;
+ 455          		}
+ 456          		
+ 457          	break;
+ 458          	}
+ 459          	case find_cluster_1:
+ 460          	{
+ 461          								YELLOWLED=OFF;
+ 462             		AMBERLED=OFF;
+ 463          		GREENLED=OFF;
+ 464          		REDLED=ON;
+ 465          		Start_Cluster=Find_Next_Clus(Start_Cluster,buf1);
+ 466          		if(Start_Cluster==0xFFFFFFFF)
+ 467          		{
+ 468          			play_status=3;
+ 469          			state_g=data_idle_2;
+ 470          		}
+ 471          		else
+ 472          		{
+ 473          		sector=First_Sector(Start_Cluster);
+ 474          		sector_offset=0;
+ 475          		state_g=data_idle_2;
+ 476          		}
+ 477          		break;
+ 478          	}
+ 479          	default:
+ 480          	{
+ 481          		state_g=data_idle_2;
+ 482          	}
+ 483          	}
+ 484          }
+ 485          
+ 486          
+ 487          */
+ 488          //////////////////////
+ 489           /*  do
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 9   
+
+ 490            {      
+ 491               do
+ 492               {
+ 493                  if(DATA_REQ==0)
+ 494                  {
+ 495                     GREENLED=ON;
+ 496                     BIT_EN=1;
+ 497                     SPI_Transfer(buf1[index1], &temp8);
+ 498          	       GREENLED=OFF;
+ 499          	       index1++;
+ 500                     if(index1>511)
+ 501                     {
+ 502                        if(index2>511)
+ 503                        {
+ 504                            BIT_EN=0;              
+ 505                            AMBERLED=ON;
+ 506          				  index2=0;
+ 507          				  
+ 508          				  Read_Sector(sector+sector_offset, 512, buf2);
+ 509          				  sector_offset++;
+ 510                            AMBERLED=OFF;
+ 511                        }
+ 512                        buffer1=0;
+ 513                        buffer2=1;
+ 514          
+ 515                    }
+ 516                 }
+ 517                 else
+ 518                 {
+ 519                    if(index2>511)
+ 520                    {
+ 521                        BIT_EN=0;
+ 522                        AMBERLED=ON;
+ 523          			  index2=0;
+ 524          			  
+ 525          			  Read_Sector(sector+sector_offset, 512, buf2);
+ 526          			  sector_offset++;
+ 527                        AMBERLED=OFF;
+ 528                    }
+ 529                    else
+ 530                    {
+ 531                        if(index1>511)
+ 532                        {
+ 533                            buffer1=0;
+ 534                            buffer2=1;
+ 535                        }
+ 536                    }
+ 537                }
+ 538             }while(buffer1==1);
+ 539             do
+ 540             {
+ 541                if(DATA_REQ==0)
+ 542                {
+ 543                    REDLED=ON;
+ 544                    BIT_EN=1;
+ 545                    SPI_Transfer(buf2[index2], &temp8);
+ 546                    REDLED=OFF;
+ 547                    index2++;
+ 548                    if(index2>511)
+ 549                    {
+ 550                        if(index1>511)
+ 551                        {
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 10  
+
+ 552                            BIT_EN=0; 
+ 553                            YELLOWLED=ON;
+ 554          				  index1=0;
+ 555          				  
+ 556          				  Read_Sector(sector+sector_offset, 512, buf1);
+ 557          				  sector_offset++;
+ 558                            YELLOWLED=OFF;
+ 559                        }
+ 560                        buffer2=0;
+ 561                        buffer1=1;
+ 562                   
+ 563                     }
+ 564                  }
+ 565                  else
+ 566                  {
+ 567                     if(index1>511)
+ 568                     {
+ 569                        BIT_EN=0; 
+ 570                        YELLOWLED=ON;
+ 571          			  index1=0;
+ 572          			  
+ 573          			  Read_Sector(sector+sector_offset, 512, buf1);
+ 574          			  sector_offset++;
+ 575                        YELLOWLED=OFF;
+ 576                     }
+ 577                     else
+ 578                     {
+ 579                         if(index2>511)
+ 580                         {
+ 581                            buffer2=0;
+ 582                            buffer1=1;
+ 583                         }
+ 584                     }
+ 585                  }
+ 586                }while(buffer2==1);
+ 587            }while(sector_offset<512);
+ 588          //P3_2=OFF;
+ 589          } 
+ 590          */
+ 591          /*
+ 592          
+ 593          void Play_Song2(uint32_t Start_Cluster)
+ 594          {
+ 595             uint16_t index1;
+ 596             uint8_t buff_emp, * p_out;
+ 597             uint32_t sector, sector_offset;
+ 598          printf("Starting Cluster = %lu\n\r",Start_Cluster);
+ 599          sector=First_Sector(Start_Cluster);
+ 600          printf("Starting Sector = %lu\n\r",sector);
+ 601          //P3_2=ON;
+ 602          sector_offset=0;
+ 603          YELLOWLED=ON;
+ 604          nCS0=0;
+ 605          SEND_COMMAND(17,sector+sector_offset);
+ 606          read_block(512,buf1);
+ 607          index1=0;
+ 608          sector_offset++;
+ 609          nCS0=1;
+ 610          YELLOWLED=OFF;
+ 611          //AMBERLED=ON;
+ 612          //nCS0=0;
+ 613          //SEND_COMMAND(17,sector+sector_offset);
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 11  
+
+ 614          //read_block(buf2,512);
+ 615          //sector_offset++;
+ 616          //nCS0=1;
+ 617          //AMBERLED=OFF;
+ 618          
+ 619          
+ 620             p_out=buf1;
+ 621             buff_emp=0;
+ 622             do
+ 623             {
+ 624                if(DATA_REQ==0)
+ 625                {
+ 626                   GREENLED=ON;
+ 627                   BIT_EN=1;
+ 628                   while((SPSTA&0x80)!=0x80);
+ 629                   SPDAT=*(buf1+index1);
+ 630                   index1++;
+ 631                   if(index1==512)
+ 632                   {
+ 633                      buff_emp|=1;           
+ 634                   }
+ 635          		 if(index1==1024)
+ 636          		 {
+ 637          		    index1=0;
+ 638          			buff_emp|=2;
+ 639          	     }
+ 640                   if(index1==768)
+ 641                   {
+ 642                     BIT_EN=0;
+ 643                     GREENLED=OFF;
+ 644                     if((buff_emp & 0x01)==0x01)
+ 645                     {
+ 646                        YELLOWLED=ON;
+ 647                        nCS0=0;
+ 648                        SEND_COMMAND(17,sector+sector_offset);
+ 649                        read_block(512,buf1);
+ 650                        nCS0=1;             
+ 651                        YELLOWLED=OFF;
+ 652                        buff_emp &= 0xFE;
+ 653                        sector_offset++;            
+ 654                     }
+ 655                   }
+ 656                   if(index1==256)
+ 657                   {
+ 658                     BIT_EN=0;
+ 659                     GREENLED=OFF;
+ 660                     if((buff_emp & 0x02)==0x02)
+ 661                     {
+ 662                        AMBERLED=ON;
+ 663                        nCS0=0;
+ 664                        SEND_COMMAND(17,sector+sector_offset);
+ 665                        read_block(512,buf2);
+ 666                        nCS0=1;             
+ 667                        AMBERLED=OFF;
+ 668                        buff_emp &= 0xFD;
+ 669                        sector_offset++;            
+ 670                     }
+ 671                   }                        
+ 672                 }
+ 673                 else
+ 674                 {
+ 675                    GREENLED=OFF;
+C51 COMPILER V6.02  PLAY_SONG                                                              12/14/2015 14:50:20 PAGE 12  
+
+ 676                    BIT_EN=0;
+ 677                    if((buff_emp & 0x01)==0x01)
+ 678                    {
+ 679                       YELLOWLED=ON;
+ 680                       nCS0=0;
+ 681                       SEND_COMMAND(17,sector+sector_offset);
+ 682                       read_block(512,buf1);
+ 683                       nCS0=1;             
+ 684                       YELLOWLED=OFF;
+ 685                       buff_emp &= 0xFE;
+ 686                       sector_offset++;
+ 687           //            print_hex(1);
+ 688           //            print_hex(i);
+ 689                      
+ 690                    }
+ 691                    else if((buff_emp & 0x02)==0x02)
+ 692                    {
+ 693                       AMBERLED=ON;
+ 694                       nCS0=0;
+ 695                       SEND_COMMAND(17,sector+sector_offset);
+ 696                       read_block(512,buf2);
+ 697                       nCS0=1;             
+ 698                       AMBERLED=OFF;
+ 699                       buff_emp &= 0xFD;
+ 700                       sector_offset++;
+ 701                    }
+ 702                 }
+ 703             }while(sector_offset<128);   
+ 704             GREENLED=1;
+ 705          //   P3_2=OFF;
+ 706            }  
+ 707          
+ 708           */
+ 709           
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    944    ----
+   CONSTANT SIZE    =     65    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1      22
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
